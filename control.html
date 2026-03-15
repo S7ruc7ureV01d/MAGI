@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NERV - TERMINAL 01</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+@font-face {
+  font-family: 'EVA-Matisse';
+  src: url('./fonts/EVA-Matisse_Standard.ttf') format('truetype');
+}
+*, *::before, *::after { box-sizing: border-box; }
+:root {
+  --amber: #ff8d00; --amber-dim: #7a4400; --green: #52e691;
+  --red: #c0392b; --bg: #000; --bg3: #110800; --dim: #5a3a10;
+  --font: 'Share Tech Mono', 'Lucida Console', monospace;
+}
+
+/* No scrollbar ever */
+html, body {
+  margin: 0; padding: 0; overflow: hidden; height: 100vh;
+  background: repeating-linear-gradient(45deg,#000 0,#000 20px,#0a0500 20px,#0a0500 40px);
+  font-family: var(--font); color: var(--amber);
+}
+
+.ctrl-root {
+  width: 100%; height: 100vh;
+  border: 2px solid var(--amber); background: var(--bg);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* Top bar */
+.ctrl-topbar {
+  display: flex; align-items: center; flex-shrink: 0;
+  border-bottom: 2px solid var(--amber); padding: 6px 16px;
+  background: repeating-linear-gradient(45deg,#000 0,#000 10px,#0d0600 10px,#0d0600 20px);
+  gap: 20px;
+}
+.ctrl-logo { font-size:1.8rem; font-weight:bold; letter-spacing:6px; color:var(--red); border:2px solid var(--red); padding:2px 10px; font-family:'EVA-Matisse','Lucida Console',monospace; }
+.ctrl-title { flex:1; font-size:0.85rem; letter-spacing:3px; }
+.ctrl-clock { font-size:0.8rem; color:var(--green); letter-spacing:2px; }
+
+/* Grid fills remaining height, no overflow */
+.ctrl-grid {
+  display: grid; grid-template-columns: 220px 1fr 280px;
+  flex: 1; min-height: 0; overflow: hidden;
+}
+.ctrl-panel { padding: 16px; border-right: 1px solid var(--amber-dim); overflow: hidden; }
+.ctrl-panel:last-child { border-right: none; }
+.ctrl-panel-right { overflow-y: auto; scrollbar-width: none; }
+.ctrl-panel-right::-webkit-scrollbar { display: none; }
+
+.ctrl-panel-title { font-size:0.7rem; letter-spacing:4px; color:var(--amber-dim); border-bottom:1px solid var(--amber-dim); padding-bottom:4px; margin-bottom:12px; }
+
+/* Left */
+.ctrl-readout-grid { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; font-size:0.72rem; }
+.ctrl-green { color:var(--green); } .ctrl-amber { color:var(--amber); } .ctrl-dim { color:var(--dim); } .ctrl-red { color:var(--red); }
+.ctrl-hr { border:none; border-top:1px solid var(--amber-dim); margin:16px 0; }
+
+/* Centre */
+.ctrl-field-group { margin-bottom: 16px; }
+.ctrl-label { display:block; font-size:0.68rem; letter-spacing:3px; color:var(--amber-dim); margin-bottom:6px; }
+.ctrl-input {
+  width:100%; background:#0d0700; border:2px solid var(--amber); color:var(--amber);
+  font-family:var(--font); font-size:0.9rem; padding:8px 10px; outline:none; letter-spacing:1px;
+}
+.ctrl-input::placeholder { color:var(--amber-dim); }
+.ctrl-input:focus { border-color:var(--green); box-shadow:0 0 8px #52e69155; }
+.ctrl-btn {
+  width:100%; background:#1a0900; border:2px solid var(--amber); color:var(--amber);
+  font-family:var(--font); font-size:1rem; letter-spacing:4px; padding:10px;
+  cursor:pointer; transition:background .15s,box-shadow .15s; margin-bottom:14px;
+}
+.ctrl-btn:hover  { background:#2e1200; box-shadow:0 0 12px #ff8d0066; }
+.ctrl-btn:active { background:var(--amber); color:#000; }
+.ctrl-status-msg { font-size:0.78rem; letter-spacing:2px; color:var(--green); min-height:1.4em; margin-bottom:4px; }
+.ctrl-last-query { font-size:0.85rem; color:var(--amber); background:#0a0600; border:1px solid var(--amber-dim); padding:8px; min-height:2.5em; word-break:break-word; }
+
+/* Agent cards */
+.ctrl-agent-card { margin-bottom:14px; padding:10px; background:var(--bg3); border-left:3px solid var(--amber); }
+.ctrl-agent-name { font-size:0.85rem; font-weight:bold; letter-spacing:2px; margin-bottom:2px; }
+.ctrl-agent-role { font-size:0.65rem; letter-spacing:3px; color:var(--green); margin-bottom:4px; }
+.ctrl-agent-desc { font-size:0.7rem; color:var(--dim); line-height:1.4; margin-bottom:8px; }
+.ctrl-agent-model-row { display:flex; flex-direction:column; gap:3px; }
+.ctrl-label-sm { font-size:0.62rem; letter-spacing:2px; color:var(--amber-dim); }
+.ctrl-select {
+  width:100%; background:#0a0500; border:1px solid var(--amber); color:var(--amber);
+  font-family:var(--font); font-size:0.8rem; padding:5px 8px; outline:none;
+  appearance:none; -webkit-appearance:none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23ff8d00'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 8px center; cursor:pointer;
+}
+.ctrl-select:focus { border-color:var(--green); }
+.ctrl-select option { background:#0a0500; color:var(--amber); }
+
+.ctrl-link { display:block; color:var(--amber); text-decoration:none; font-size:0.8rem; letter-spacing:2px; border:1px solid var(--amber-dim); padding:6px 10px; text-align:center; transition:border-color .15s,color .15s; }
+.ctrl-link:hover { border-color:var(--green); color:var(--green); }
+
+/* Bottom bar */
+.ctrl-bottombar { flex-shrink:0; border-top:2px solid var(--amber); padding:5px 16px; font-size:0.65rem; letter-spacing:3px; background:repeating-linear-gradient(45deg,#000 0,#000 10px,#0d0600 10px,#0d0600 20px); }
+
+/* ── Endpoint edit modal ── */
+.ep-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7); z-index: 99998;
+  align-items: center; justify-content: center;
+}
+.ep-overlay.visible { display: flex; }
+.ep-modal {
+  background: #000; border: 2px solid var(--amber);
+  width: 420px; font-family: var(--font);
+}
+.ep-header {
+  display: flex; border-bottom: 2px solid var(--amber);
+  background: repeating-linear-gradient(45deg,#000 0,#000 10px,#211200 10px,#211200 20px);
+}
+.ep-title { flex:1; padding: 6px 10px; color: var(--amber); font-size:0.8rem; letter-spacing:3px; }
+.ep-close { padding: 6px 10px; border-left: 2px solid var(--amber); cursor: pointer; color: var(--amber); }
+.ep-close:hover { background: #1a0900; }
+.ep-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.ep-label { font-size:0.68rem; letter-spacing:3px; color: var(--amber-dim); }
+.ep-input {
+  width: 100%; background: #0d0700; border: 2px solid var(--amber); color: var(--amber);
+  font-family: var(--font); font-size: 0.9rem; padding: 8px 10px; outline: none;
+}
+.ep-input:focus { border-color: var(--green); }
+.ep-btn {
+  background: #1a0900; border: 2px solid var(--amber); color: var(--amber);
+  font-family: var(--font); font-size: 0.85rem; letter-spacing:3px; padding: 8px;
+  cursor: pointer; transition: background .15s;
+}
+.ep-btn:hover { background: #2e1200; }
+
+/* ── Error banner ── */
+.ctrl-error-banner {
+  display: none; background: #1a0000; border: 2px solid var(--red);
+  color: var(--red); font-size: 0.78rem; letter-spacing: 2px;
+  padding: 6px 12px; margin-bottom: 10px;
+}
+.ctrl-error-banner.visible { display: block; }
+
+/* ── Endpoint clickable ── */
+.ep-link {
+  color: var(--amber); cursor: pointer; text-decoration: none;
+  border-bottom: 1px dashed var(--amber-dim);
+  transition: color .15s, border-color .15s;
+}
+.ep-link:hover { color: var(--green); border-color: var(--green); }
+
+/* Scanline */
+body::after { content:''; pointer-events:none; position:fixed; inset:0; background:repeating-linear-gradient(to bottom,transparent 0,transparent 3px,rgba(0,0,0,.08) 3px,rgba(0,0,0,.08) 4px); z-index:9999; }
+
+/* ── Toggle switch ── */
+.ctrl-toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 0; font-size: 0.72rem; gap: 8px;
+}
+.ctrl-toggle-label { color: var(--amber); letter-spacing: 1px; flex: 1; }
+.toggle-track {
+  position: relative; width: 36px; height: 18px; flex-shrink: 0;
+  background: #1a0900; border: 1px solid var(--amber-dim); cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.toggle-track.on { background: #2a1500; border-color: var(--amber); }
+.toggle-thumb {
+  position: absolute; top: 2px; left: 2px;
+  width: 12px; height: 12px; background: var(--amber-dim);
+  transition: transform 0.15s, background 0.15s;
+}
+.toggle-track.on .toggle-thumb { transform: translateX(18px); background: var(--amber); }
+
+/* ── Custom context menu ── */
+#ctx-menu {
+  display: none; position: fixed; z-index: 99999;
+  background: #0a0500; border: 2px solid var(--amber);
+  font-family: var(--font); font-size: 0.82rem; min-width: 140px;
+  box-shadow: 0 0 12px #ff8d0033;
+}
+#ctx-menu.visible { display: block; }
+.ctx-item {
+  padding: 7px 14px; color: var(--amber); cursor: pointer;
+  letter-spacing: 2px; border-bottom: 1px solid var(--amber-dim);
+  user-select: none;
+}
+.ctx-item:last-child { border-bottom: none; }
+.ctx-item:hover { background: #2a1500; }
+.ctx-item.disabled { color: var(--amber-dim); pointer-events: none; }
+</style>
+</head>
+<body>
+
+<!-- Custom context menu -->
+<div id="ctx-menu">
+  <div class="ctx-item" id="ctx-cut">CUT</div>
+  <div class="ctx-item" id="ctx-copy">COPY</div>
+  <div class="ctx-item" id="ctx-paste">PASTE</div>
+</div>
+
+<div class="ctrl-root">
+  <div class="ctrl-topbar">
+    <span class="ctrl-logo">NERV</span>
+    <span class="ctrl-title">MAGI CONTROL SYSTEM — TERMINAL 01</span>
+    <span class="ctrl-clock" id="clock">--:--:--</span>
+  </div>
+
+  <div class="ctrl-grid">
+    <!-- Left -->
+    <div class="ctrl-panel">
+      <div class="ctrl-panel-title">SYSTEM STATUS</div>
+      <div class="ctrl-readout-grid">
+        <span>MAGI LINK</span>  <span id="magi-link-status" class="ctrl-green">■ ONLINE</span>
+        <span>SUBSYS 01</span>  <span class="ctrl-amber">MELCHIOR</span>
+        <span>SUBSYS 02</span>  <span class="ctrl-amber">BALTHASAR</span>
+        <span>SUBSYS 03</span>  <span class="ctrl-amber">CASPER</span>
+        <span>PRIORITY</span>   <span class="ctrl-green">AAA</span>
+        <span>EX_MODE</span>    <span class="ctrl-dim">OFF</span>
+        <span>SYNC RATE</span>  <span class="ctrl-green">100%</span>
+        <span>CODE</span>       <span class="ctrl-amber" id="ctrl-code-display">473</span>
+      </div>
+      <hr class="ctrl-hr">
+      <div class="ctrl-panel-title">LLM ENGINE</div>
+      <div class="ctrl-readout-grid">
+        <span>ENDPOINT</span>  <span class="ep-link" id="endpoint-display" onclick="openEndpointModal()">localhost:11434</span>
+        <span>PROTOCOL</span>  <span class="ctrl-amber">OLLAMA/HTTP</span>
+        <span>STREAM</span>    <span class="ctrl-dim">DISABLED</span>
+      </div>
+      <hr class="ctrl-hr">
+      <div class="ctrl-panel-title">AUDIO SETTINGS</div>
+      <div class="ctrl-toggle-row">
+        <span class="ctrl-toggle-label">THINKING SFX</span>
+        <div class="toggle-track on" id="toggle-thinking" onclick="toggleSound('thinking')">
+          <div class="toggle-thumb"></div>
+        </div>
+      </div>
+      <div class="ctrl-toggle-row">
+        <span class="ctrl-toggle-label">DONE SFX</span>
+        <div class="toggle-track on" id="toggle-done" onclick="toggleSound('done')">
+          <div class="toggle-thumb"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Centre -->
+    <div class="ctrl-panel">
+      <div class="ctrl-panel-title">QUERY TERMINAL</div>
+      <div class="ctrl-field-group">
+        <label class="ctrl-label">INPUT QUERY</label>
+        <input class="ctrl-input" id="query-input" type="text"
+               placeholder="ENTER QUERY AND PRESS [EXECUTE]" autocomplete="off">
+      </div>
+      <div class="ctrl-error-banner" id="error-banner"></div>
+      <button class="ctrl-btn" id="execute-btn">EXECUTE</button>
+      <div class="ctrl-status-msg" id="status-msg">AWAITING INPUT</div>
+      <hr class="ctrl-hr">
+      <div class="ctrl-panel-title">LAST TRANSMITTED</div>
+      <div class="ctrl-last-query" id="last-query">—</div>
+    </div>
+
+    <!-- Right -->
+    <div class="ctrl-panel ctrl-panel-right">
+      <div class="ctrl-panel-title">AGENT MODELS</div>
+      <div class="ctrl-agent-card">
+        <div class="ctrl-agent-name">MELCHIOR • 1</div>
+        <div class="ctrl-agent-role">SCIENTIST</div>
+        <div class="ctrl-agent-desc">Furthers understanding of the universe and advances technological progress.</div>
+        <div class="ctrl-agent-model-row">
+          <label class="ctrl-label-sm">MODEL</label>
+          <select class="ctrl-select" id="model-melchior"></select>
+        </div>
+      </div>
+      <div class="ctrl-agent-card">
+        <div class="ctrl-agent-name">BALTHASAR • 2</div>
+        <div class="ctrl-agent-role">MOTHER</div>
+        <div class="ctrl-agent-desc">Protects her children and ensures their well-being.</div>
+        <div class="ctrl-agent-model-row">
+          <label class="ctrl-label-sm">MODEL</label>
+          <select class="ctrl-select" id="model-balthasar"></select>
+        </div>
+      </div>
+      <div class="ctrl-agent-card">
+        <div class="ctrl-agent-name">CASPER • 3</div>
+        <div class="ctrl-agent-role">WOMAN</div>
+        <div class="ctrl-agent-desc">Pursues love, dreams and desires.</div>
+        <div class="ctrl-agent-model-row">
+          <label class="ctrl-label-sm">MODEL</label>
+          <select class="ctrl-select" id="model-casper"></select>
+        </div>
+      </div>
+      <hr class="ctrl-hr">
+      <div class="ctrl-panel-title">DISPLAY PANEL</div>
+      <a class="ctrl-link" id="open-display-btn" href="#">FOCUS MAGI SCREEN</a>
+    </div>
+  </div>
+
+  <div class="ctrl-bottombar">
+    <span class="ctrl-dim">GEHIRN HEAVY INDUSTRIES  //  NERV HQ TOKYO-3  //  CLASSIFIED AAA</span>
+  </div>
+</div>
+
+<!-- Endpoint edit modal -->
+<div class="ep-overlay" id="ep-overlay">
+  <div class="ep-modal">
+    <div class="ep-header">
+      <div class="ep-title">EDIT ENDPOINT</div>
+      <div class="ep-close" onclick="closeEndpointModal()">X</div>
+    </div>
+    <div class="ep-body">
+      <div class="ep-label">OLLAMA BASE URL</div>
+      <input class="ep-input" id="ep-input" type="text" value="http://localhost:11434" autocomplete="off">
+      <button class="ep-btn" onclick="saveEndpoint()">APPLY</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const { ipcRenderer } = require('electron');
+
+// ── Clock — local time with milliseconds HH:MM:SS:ms ─────────────────────
+function pad(n, w) { return String(n).padStart(w || 2, '0'); }
+function updateClock() {
+  const n  = new Date();
+  const ms = pad(Math.floor(n.getMilliseconds() / 10), 2); // two-digit centiseconds
+  const date = `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`;
+  const time = `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}:${ms}`;
+  document.getElementById('clock').textContent = `${date}  ${time}`;
+}
+updateClock(); setInterval(updateClock, 50); // 50ms interval for smooth ms display
+
+// ── Fetch startup values (CODE, FILE) from main ───────────────────────────
+ipcRenderer.invoke('get-startup-values').then(({ code, file }) => {
+  document.getElementById('ctrl-code-display').textContent = code;
+});
+
+// ── Restore saved endpoint display ────────────────────────────────────────
+ipcRenderer.invoke('get-endpoint').then(url => {
+  document.getElementById('endpoint-display').textContent = url.replace(/^https?:\/\//, '');
+});
+
+// ── Load models + restore saved selections ─────────────────────────────────
+async function loadModels() {
+  const [models, prefs] = await Promise.all([
+    ipcRenderer.invoke('list-models'),
+    ipcRenderer.invoke('load-prefs'),
+  ]);
+  const saved = prefs.models || {};
+  ['melchior','balthasar','casper'].forEach(name => {
+    const sel = document.getElementById('model-' + name);
+    const list = models.length ? models : ['llama3'];
+    list.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = m;
+      sel.appendChild(opt);
+    });
+    if (saved[name] && list.includes(saved[name])) sel.value = saved[name];
+  });
+  // Restore sound settings
+  if (prefs.sound) {
+    if (prefs.sound.thinking !== undefined) {
+      soundState.thinking = prefs.sound.thinking;
+      document.getElementById('toggle-thinking').classList.toggle('on', soundState.thinking);
+    }
+    if (prefs.sound.done !== undefined) {
+      soundState.done = prefs.sound.done;
+      document.getElementById('toggle-done').classList.toggle('on', soundState.done);
+    }
+    // Push restored state to display window
+    sendSoundSettings();
+  }
+}
+loadModels();
+
+// Save selections whenever a dropdown changes
+['melchior','balthasar','casper'].forEach(name => {
+  document.getElementById('model-' + name).addEventListener('change', saveModelPrefs);
+});
+function saveModelPrefs() {
+  ipcRenderer.invoke('save-prefs', {
+    models: {
+      melchior:  document.getElementById('model-melchior').value,
+      balthasar: document.getElementById('model-balthasar').value,
+      casper:    document.getElementById('model-casper').value,
+    },
+    sound: soundState,
+  });
+}
+
+// ── Submit ─────────────────────────────────────────────────────────────────
+let jobCounter = 0, lastSubmit = 0;
+async function submit() {
+  const now = Date.now();
+  if (now - lastSubmit < 300) return;
+  lastSubmit = now;
+
+  const query = document.getElementById('query-input').value.trim();
+  if (!query) { showError('EMPTY QUERY — ENTER A QUESTION FIRST'); return; }
+
+  // Check Ollama before dispatching
+  const online = await checkOllama(false);
+  if (!online) { showError('OLLAMA OFFLINE — CANNOT EXECUTE QUERY'); return; }
+
+  const models = {
+    melchior:  document.getElementById('model-melchior').value,
+    balthasar: document.getElementById('model-balthasar').value,
+    casper:    document.getElementById('model-casper').value,
+  };
+  const jobId = ++jobCounter;
+  ipcRenderer.invoke('submit-query', { jobId, query, models });
+  document.getElementById('status-msg').textContent = `TRANSMITTED → MAGI  [ID:${String(jobId).padStart(4,'0')}]`;
+  document.getElementById('last-query').textContent = query;
+  document.getElementById('query-input').value = '';
+}
+document.getElementById('execute-btn').addEventListener('click', submit);
+document.getElementById('query-input').addEventListener('keydown', e => { if (e.key==='Enter') submit(); });
+
+// ── Sound toggles ──────────────────────────────────────────────────────────
+const soundState = { thinking: true, done: true };
+
+function toggleSound(which) {
+  soundState[which] = !soundState[which];
+  const track = document.getElementById('toggle-' + which);
+  track.classList.toggle('on', soundState[which]);
+  sendSoundSettings();
+}
+
+function sendSoundSettings() {
+  ipcRenderer.send('sound-settings', {
+    enableThinking: soundState.thinking,
+    enableDone:     soundState.done,
+  });
+  // persist
+  ipcRenderer.invoke('save-prefs', {
+    models: {
+      melchior:  document.getElementById('model-melchior').value,
+      balthasar: document.getElementById('model-balthasar').value,
+      casper:    document.getElementById('model-casper').value,
+    },
+    sound: soundState,
+  });
+}
+
+// Focus display window
+document.getElementById('open-display-btn').addEventListener('click', e => {
+  e.preventDefault();
+  ipcRenderer.send('focus-display');
+});
+
+// ── Ollama connectivity ────────────────────────────────────────────────────
+async function checkOllama(showBanner) {
+  const online = await ipcRenderer.invoke('ping-ollama');
+  const el = document.getElementById('magi-link-status');
+  el.textContent = online ? '■ ONLINE' : '■ OFFLINE';
+  el.className   = online ? 'ctrl-green' : 'ctrl-red';
+  ipcRenderer.send('ollama-status', { online });
+  if (!online && showBanner) showError('OLLAMA UNREACHABLE — CHECK CONNECTION');
+  return online;
+}
+// Check on startup, then every 10s
+checkOllama(false);
+setInterval(() => checkOllama(false), 10000);
+
+// Receive offline notice from main (mid-query failure)
+ipcRenderer.on('ollama-offline', () => {
+  document.getElementById('magi-link-status').textContent = '■ OFFLINE';
+  document.getElementById('magi-link-status').className   = 'ctrl-red';
+  ipcRenderer.send('ollama-status', { online: false });
+  showError('OLLAMA UNREACHABLE — QUERY FAILED');
+});
+
+// ── Error banner ───────────────────────────────────────────────────────────
+function showError(msg) {
+  const b = document.getElementById('error-banner');
+  b.textContent = '⚠  ' + msg;
+  b.classList.add('visible');
+  clearTimeout(b._timer);
+  b._timer = setTimeout(() => b.classList.remove('visible'), 6000);
+}
+
+// ── Endpoint modal ─────────────────────────────────────────────────────────
+function openEndpointModal() {
+  ipcRenderer.invoke('get-endpoint').then(url => {
+    document.getElementById('ep-input').value = url;
+    document.getElementById('ep-overlay').classList.add('visible');
+    setTimeout(() => document.getElementById('ep-input').focus(), 50);
+  });
+}
+function closeEndpointModal() {
+  document.getElementById('ep-overlay').classList.remove('visible');
+}
+function saveEndpoint() {
+  const url = document.getElementById('ep-input').value.trim();
+  if (!url) return;
+  ipcRenderer.invoke('set-endpoint', url).then(() => {
+    const display = url.replace(/^https?:\/\//, '');
+    document.getElementById('endpoint-display').textContent = display;
+    closeEndpointModal();
+    checkOllama(true);
+  });
+}
+document.getElementById('ep-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('ep-overlay')) closeEndpointModal();
+});
+document.getElementById('ep-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter')  saveEndpoint();
+  if (e.key === 'Escape') closeEndpointModal();
+});
+// Apply button
+document.querySelector('.ep-btn').addEventListener('click', saveEndpoint);
+
+// ── Custom context menu ────────────────────────────────────────────────────
+const ctxMenu     = document.getElementById('ctx-menu');
+const ctxCut      = document.getElementById('ctx-cut');
+const ctxCopy     = document.getElementById('ctx-copy');
+const ctxPaste    = document.getElementById('ctx-paste');
+let   ctxTarget   = null;
+
+function hideCtx() { ctxMenu.classList.remove('visible'); ctxTarget = null; }
+
+document.addEventListener('contextmenu', async e => {
+  const el = e.target;
+  const isInput = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA';
+  if (!isInput) return; // only show for text inputs
+  e.preventDefault();
+  ctxTarget = el;
+
+  const hasSelection = el.selectionStart !== el.selectionEnd;
+  ctxCut.classList.toggle('disabled',  !hasSelection);
+  ctxCopy.classList.toggle('disabled', !hasSelection);
+
+  // Position — keep inside window
+  const x = Math.min(e.clientX, window.innerWidth  - 160);
+  const y = Math.min(e.clientY, window.innerHeight - 120);
+  ctxMenu.style.left = x + 'px';
+  ctxMenu.style.top  = y + 'px';
+  ctxMenu.classList.add('visible');
+});
+
+document.addEventListener('click', hideCtx);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideCtx(); });
+
+ctxCut.addEventListener('click', async () => {
+  const el = ctxTarget;
+  hideCtx();
+  if (!el) return;
+  const { selectionStart: s, selectionEnd: e, value } = el;
+  if (s === e) return;
+  await ipcRenderer.invoke('clipboard-write', value.slice(s, e));
+  el.value = value.slice(0, s) + value.slice(e);
+  el.setSelectionRange(s, s);
+  el.focus();
+  el.dispatchEvent(new Event('input'));
+});
+
+ctxCopy.addEventListener('click', async () => {
+  const el = ctxTarget;
+  hideCtx();
+  if (!el) return;
+  const { selectionStart: s, selectionEnd: e, value } = el;
+  if (s === e) return;
+  await ipcRenderer.invoke('clipboard-write', value.slice(s, e));
+});
+
+ctxPaste.addEventListener('click', async () => {
+  const el = ctxTarget;
+  hideCtx();
+  if (!el) return;
+  const text = await ipcRenderer.invoke('clipboard-read');
+  if (!text) return;
+  el.focus();
+  const { selectionStart: s, selectionEnd: e, value } = el;
+  el.value = value.slice(0, s) + text + value.slice(e);
+  const pos = s + text.length;
+  el.setSelectionRange(pos, pos);
+  el.dispatchEvent(new Event('input'));
+});
+</script>
+</body>
+</html>
