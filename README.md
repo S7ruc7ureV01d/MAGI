@@ -3,9 +3,9 @@
 MAGI system is a cluster of three AI supercomputers that manage and support all tasks performed by the NERV organization from their Tokyo-3 headquarters.
 
 Originally designed by Dr. Naoko Akagi, each of the three AI agents reflects a separate part of her complex personality:
-- MELCHIOR • 1 — her as a scientist
-- BALTHASAR • 2 — her as a mother
-- CASPER • 3 — her as a woman
+ MELCHIOR — her as a scientist
+ BALTHASAR — her as a mother
+ CASPER — her as a woman
 
 Those (often conflicting, yet complementary) agents participate in a voting process in order to answer the most challenging questions.
 
@@ -27,9 +27,9 @@ The system can produce the following responses, evaluated in this order: error (
 Individual agents can be clicked to view their full reply and personality.
 
 Each subsystem was fine-tuned using the following prompts:
-- MELCHIOR • 1 — You are a scientist. Your goal is to further our understanding of the universe and advance our technological progress.
-- BALTHASAR • 2 — You are a mother. Your goal is to protect your children and ensure their well-being.
-- CASPER • 3 — You are a woman. Your goal is to pursue love, dreams and desires.
+ MELCHIOR — You are a scientist. Your goal is to further our understanding of the universe and advance our technological progress.
+ BALTHASAR — You are a mother. Your goal is to protect your children and ensure their well-being.
+ CASPER — You are a woman. Your goal is to pursue love, dreams and desires.
 
 ## Requirements
 
@@ -68,7 +68,9 @@ ollama pull llama3
 npm start
 ```
 
-Two windows will open — the MAGI display screen and the NERV control panel. Type your question into the control panel and press Enter or click EXECUTE. Click on individual subsystems to inspect their answers.
+Two windows will open — the MAGI display screen and the NERV control panel. Type your question into the control panel and press Enter or click EXECUTE.
+
+
 
 
 *"All souls return to the sea. MAGI — the wisdom of three, the will of one."*
