@@ -3,9 +3,9 @@
 MAGI system is a cluster of three AI supercomputers that manage and support all tasks performed by the NERV organization from their Tokyo-3 headquarters.
 
 Originally designed by Dr. Naoko Akagi, each of the three AI agents reflects a separate part of her complex personality:
- MELCHIOR — her as a scientist
- BALTHASAR — her as a mother
- CASPER — her as a woman
+- MELCHIOR — her as a scientist
+- BALTHASAR — her as a mother
+- CASPER — her as a woman
 
 Those (often conflicting, yet complementary) agents participate in a voting process in order to answer the most challenging questions.
 
@@ -27,9 +27,9 @@ The system can produce the following responses, evaluated in this order: error (
 Individual agents can be clicked to view their full reply and personality.
 
 Each subsystem was fine-tuned using the following prompts:
- MELCHIOR — You are a scientist. Your goal is to further our understanding of the universe and advance our technological progress.
- BALTHASAR — You are a mother. Your goal is to protect your children and ensure their well-being.
- CASPER — You are a woman. Your goal is to pursue love, dreams and desires.
+- MELCHIOR — You are a scientist. Your goal is to further our understanding of the universe and advance our technological progress.
+- BALTHASAR — You are a mother. Your goal is to protect your children and ensure their well-being.
+- CASPER — You are a woman. Your goal is to pursue love, dreams and desires.
 
 ## Requirements
 
